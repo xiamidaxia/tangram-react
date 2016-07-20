@@ -1,7 +1,7 @@
 {
   "name": "tangram-react",
   "version": "0.1.0",
-  "description": "",
+  "description": "Simple, React state management",
   "main": "lib/index.js",
   "scripts": {
     "start": "webpack-dev-server -d --history-api-fallback --hot --inline --progress --colors --port 3000",
