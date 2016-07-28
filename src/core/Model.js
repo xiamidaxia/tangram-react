@@ -12,11 +12,13 @@ export function geProperty(key) {
       return this._state[key]
     },
     set(newState) {
+      if (!this.__context) {
+        throw new Error(`Set state must in "@action".`)
+      }
       if (!this.isEqual(this._state[key], newState)) {
         this._changed()
       }
       this._state[key] = newState
-      // throw new Error(`Cannot set _state outside the model, please use "action" instead.`)
     },
   }
 }
@@ -40,7 +42,9 @@ export default class Model {
     this.monitor = opts.monitor || globalMonitor
     this._state = {}
     this._initStateAndActionKeys()
+    this._isInit = true
     this.setState(initState || {})
+    this._isInit = false
   }
 
   /**
@@ -68,6 +72,9 @@ export default class Model {
    * @param {Object} state - target state
    */
   setState(state = {}) {
+    if (!this._isInit && !this.__context) {
+      throw new Error(`Set state must in "@action".`)
+    }
     const newState = { ...this._state }
     let changed = false
     each(state, (val, key) => {

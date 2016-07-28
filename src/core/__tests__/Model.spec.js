@@ -66,10 +66,14 @@ describe('Model', () => {
     })
   })
   it('should throw Error when setting unknown state', () => {
-    class User extends Model {}
+    class User extends Model {
+      @action setUnknown() {
+        this.setState({ unKnownKey: '' })
+      }
+    }
     // expect(() => user.name = 'new name').to.throw(/Cannot set state/)
     expect(() => new User({ unKnownKey: '' })).to.throw(/Unknown state "unKnownKey"/)
-    expect(() => (new User()).setState({ unKnownKey: '' })).to.throw(/Unknown state "unKnownKey"/)
+    expect(() => (new User()).setUnknown()).to.throw(/Unknown state "unKnownKey"/)
   })
   it('should define action by @action', () => {
     expect(() => {
@@ -216,5 +220,17 @@ describe('Model', () => {
       expect(e.message).to.eql('async error')
       expect(user.getActionState('asyncError').error.message).to.eql('async error')
     }
+  })
+  it('set state outside the model', () => {
+    class User extends Model {
+      @state age = 3
+      notAction() { this.age ++ }
+      notAction2() { this.setState({ age: this.age + 1 })}
+    }
+    const user = new User
+    expect(() => user.age++).to.throw(/@action/)
+    expect(() => user.setState({ age: user.age + 1 })).to.throw(/@action/)
+    expect(() => user.notAction()).to.throw(/@action/)
+    expect(() => user.notAction2()).to.throw(/@action/)
   })
 })
