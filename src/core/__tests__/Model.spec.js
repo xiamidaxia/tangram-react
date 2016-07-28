@@ -5,7 +5,11 @@ import action from '../../decorators/action'
 import Tracker, { autorun } from '../../common/Tracker'
 describe('Model', () => {
   it('should init state by @state and initialState', () => {
-    const func = () => {}
+    function func(val, isInit) {
+      expect(isInit).to.eql(true)
+      expect(this.constructor.name).to.eql('C')
+      return val
+    }
     class A extends Model {
       @state override = 'must override'
       @state a = 'a'
@@ -18,22 +22,48 @@ describe('Model', () => {
       @state c = 'c'
       @state override = 'override success'
     }
-    const c = new C({ b: 'override b' })
+    const c = new C({ b: 'override b', func: 'func' })
     expect(c.a).to.eql('a')
     expect(c.b).to.eql('override b')
     expect(c.c).to.eql('c')
     expect(c.override).to.eql('override success')
-    expect(c.func).to.eql(func)
+    expect(c.func).to.eql('func')
     expect(c.toJS()).to.eql({
       a: 'a',
       b: 'override b',
       c: 'c',
       override: 'override success',
-      func,
+      func: 'func',
     })
   })
+  it('setState by state function', () => {
+    let firstRun = true
+    class User extends Model {
+      @state age = (val, isInit) => {
+        if (firstRun) {
+          expect(isInit).to.eql(true)
+          firstRun = false
+        } else {
+          expect(isInit).to.eql(false)
+        }
+        return val + 1
+      }
+      @action addAge() {
+        this.age ++
+      }
+      @action addAge2() {
+        this.setState({ age: this.age + 1 })
+      }
+    }
+    const user = new User({ age: 10 })
+    expect(user.age).to.eql(11)
+    user.addAge()
+    expect(user.age).to.eql(13)
+    user.addAge2()
+    expect(user.age).to.eql(15)
+  })
   it('toJS', () => {
-    const fn = () => {}
+    const fn = () => { return 'fn'}
     class A extends Model {
       @state a = 'a'
     }

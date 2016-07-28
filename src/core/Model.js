@@ -13,7 +13,10 @@ export function geProperty(key) {
     },
     set(newState) {
       if (!this.__context) {
-        throw new Error(`Set state must in "@action".`)
+        throw new Error(`[${this.constructor.name}] Set state must in "@action".`)
+      }
+      if (typeof this._initialState[key] === 'function') {
+        newState = this._initialState[key].call(this, newState, false)
       }
       if (!this.isEqual(this._state[key], newState)) {
         this._changed()
@@ -41,17 +44,16 @@ export default class Model {
     this._actionStates = {}
     this.monitor = opts.monitor || globalMonitor
     this._state = {}
-    this._initStateAndActionKeys()
-    this._isInit = true
-    this.setState(initState || {})
-    this._isInit = false
+    this._initialState = {}
+    this._initStateAndActionKeys(initState || {})
   }
 
   /**
    * Create state
+   * @param {Object} initState
    * @private
    */
-  _initStateAndActionKeys() {
+  _initStateAndActionKeys(initState) {
     const constructors = []
     let constructor = this.constructor
     const actionKeys = {}
@@ -59,11 +61,26 @@ export default class Model {
       constructors.push(constructor)
       constructor = Object.getPrototypeOf(constructor)
     }
-    this._state = constructors.reduceRight((state, c) => {
+    this._initialState = constructors.reduceRight((state, c) => {
       const keys = c._actionKeys || []
+      // add action Keys
       keys.forEach(key => actionKeys[key] = true)
-      return { ...state, ...c._initialState }
-    }, this._state)
+      each(c._initialState, (val, key) => {
+        if (typeof val !== 'function') {
+          this._state[key] = initState.hasOwnProperty(key) ? initState[key] : val
+        } else {
+          this._state[key] = val.call(this, initState[key], true)
+        }
+        state[key] = val
+      })
+      return state
+    }, this._initialState)
+    // check the state keys
+    Object.keys(initState).forEach((key) => {
+      if (!this._state.hasOwnProperty(key)) {
+        throw new Error(`[${this.constructor.name}] Unknown state "${key}"`)
+      }
+    })
     this._actionKeys = Object.keys(actionKeys)
   }
 
@@ -72,14 +89,17 @@ export default class Model {
    * @param {Object} state - target state
    */
   setState(state = {}) {
-    if (!this._isInit && !this.__context) {
-      throw new Error(`Set state must in "@action".`)
+    if (!this.__context) {
+      throw new Error(`[${this.constructor.name}] Set state must in "@action".`)
     }
     const newState = { ...this._state }
     let changed = false
     each(state, (val, key) => {
       if (!newState.hasOwnProperty(key)) {
         throw new Error(`[${this.constructor.name}] Unknown state "${key}"`)
+      }
+      if (typeof this._initialState[key] === 'function') {
+        val = this._initialState[key].call(this, val, false)
       }
       if (!this.isEqual(this._state[key], val)) {
         changed = true
