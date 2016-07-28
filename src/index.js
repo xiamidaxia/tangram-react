@@ -5,9 +5,9 @@ export globalMonitor from './core/globalMonitor'
 
 // decorators
 export observer from './decorators/observer'
-export context from './decorators/context'
+export store from './decorators/store'
 export action from './decorators/action'
 export state from './decorators/state'
 
 // utils
-export Tracker, { autorun } from './common/Tracker'
+export Tracker from './common/Tracker'

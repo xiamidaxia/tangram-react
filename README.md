@@ -5,7 +5,7 @@ Simple, React state management
 ## Guide
 
 ```javascript
-import { Model, action, context, observer, state } from 'tangram-react'
+import { Model, action, store, observer, state } from 'tangram-react'
 import React, { Component, PropTypes } from 'react'
 
 class UserModel extends Model {
@@ -26,7 +26,7 @@ class User extends Component {
   }
 }
 
-@context({ user: UserModel })
+@store({ user: UserModel })
 export default class Main extends Component {
   static propTypes = {
     user: PropTypes.instanceOf(UserModel).isRequired,

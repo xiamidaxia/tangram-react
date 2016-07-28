@@ -10,7 +10,7 @@ function addContextToComponent(TargetComponent) {
   }
 }
 
-export default function contextDecorator(initData, opts = {}) {
+export default function storeDecorator(initData, opts = {}) {
   return function contextWrap(TargetComponent) {
     addContextToComponent(TargetComponent)
     patchComponent(TargetComponent)

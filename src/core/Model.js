@@ -72,7 +72,7 @@ export default class Model {
     let changed = false
     each(state, (val, key) => {
       if (!newState.hasOwnProperty(key)) {
-        throw new Error(`Unknown state "${key}"`)
+        throw new Error(`[${this.constructor.name}] Unknown state "${key}"`)
       }
       if (!this.isEqual(this._state[key], val)) {
         changed = true
@@ -101,14 +101,14 @@ export default class Model {
     if (monitor instanceof Monitor) {
       this._monitor = monitor
     } else {
-      throw new TypeError(`[Model] ${monitor} must instance of Monitor`)
+      throw new TypeError(`[${this.constructor.name}] ${monitor} must instance of Monitor`)
     }
   }
   get monitor() {
     return this._monitor
   }
   getActionState(actionName) {
-    if (!this._actionKeys.includes(actionName)) throw new Error('[Model] Undefined action: ', actionName)
+    if (!this._actionKeys.includes(actionName)) throw new Error(`[${this.constructor.name}] Undefined action: `, actionName)
     if (!this._actionStates[actionName]) {
       this._actionStates[actionName] = { loading: false, error: null }
     }
