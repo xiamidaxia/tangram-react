@@ -95,6 +95,18 @@ describe('Model', () => {
       },
     })
   })
+  it('setState before and after', () => {
+    class User extends Model {
+      @state age = 1
+      @action setUnknown() {
+        this.setState({ age: 2 })
+        expect(this.oldState).to.eql(this._state)
+      }
+    }
+    const user = new User
+    user.oldState = user._state
+    expect(user.oldState).to.eql(user._state)
+  })
   it('should throw Error when setting unknown state', () => {
     class User extends Model {
       @action setUnknown() {

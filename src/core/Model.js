@@ -92,10 +92,10 @@ export default class Model {
     if (!this.__context) {
       throw new Error(`[${this.constructor.name}] Set state must in "@action".`)
     }
-    const newState = { ...this._state }
+    const _state = this._state
     let changed = false
     each(state, (val, key) => {
-      if (!newState.hasOwnProperty(key)) {
+      if (!_state.hasOwnProperty(key)) {
         throw new Error(`[${this.constructor.name}] Unknown state "${key}"`)
       }
       if (typeof this._initialState[key] === 'function') {
@@ -104,10 +104,9 @@ export default class Model {
       if (!this.isEqual(this._state[key], val)) {
         changed = true
       }
-      newState[key] = val
+      _state[key] = val
     })
     if (changed) {
-      this._state = newState
       this._changed()
     }
   }
