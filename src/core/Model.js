@@ -18,9 +18,9 @@ export function geProperty(key) {
         newState = this._initialState[key].call(this, newState, false)
       }
       if (!this.isEqual(this._state[key], newState)) {
+        this._state[key] = newState
         this._changed()
       }
-      this._state[key] = newState
     },
   }
 }

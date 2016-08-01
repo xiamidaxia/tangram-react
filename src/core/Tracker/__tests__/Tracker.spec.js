@@ -2,13 +2,12 @@ import Computation from '../Computation'
 import { autorun, Dependency } from '../index'
 import { expect } from 'chai'
 
-describe.only('Tracker', () => {
+describe('Tracker', () => {
   it('autorun', () => {
     const a = new Dependency()
     let runTimes = 0
     const compute = autorun((c) => {
       expect(c).to.instanceOf(Computation)
-      expect(c.invalidated).to.eql(false)
       runTimes ++
       if (runTimes === 1) {
         expect(c.firstRun).to.eql(true)

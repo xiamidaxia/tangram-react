@@ -10,7 +10,6 @@ function setCurrentComputation(compute) {
 
 export default class Computation {
   constructor(fn) {
-    this._parent = currentComputation
     this._invalidates = []
     this._fn = fn
     this._invalidated = true
@@ -18,12 +17,6 @@ export default class Computation {
     this._computing = false
     this._firstRun = true
     this._stopped = false
-    if (this._parent) {
-      // Parent recompute will stop the children compute
-      this._parent.onInvalidate(() => {
-        this.stop()
-      })
-    }
   }
   get firstRun() {
     return this._firstRun
@@ -52,12 +45,15 @@ export default class Computation {
   compute() {
     if (this._stopped || this._computing) return
     this.invalidate()
+    const oldComputation = currentComputation
+    if (oldComputation) {
+      oldComputation.onInvalidate(() => this.stop())
+    }
     setCurrentComputation(this)
     this._computing = true
-    this._invalidated = false
     this._fn(this)
     this._computing = false
     this._firstRun = false
-    setCurrentComputation(this._parent)
+    setCurrentComputation(oldComputation)
   }
 }
