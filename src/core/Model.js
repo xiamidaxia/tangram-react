@@ -7,7 +7,7 @@ export function geProperty(key) {
     enumerable: true,
     configurable: false,
     get() {
-      this._dep.depend()
+      this._stateDeps[key].depend()
       return this._state[key]
     },
     set(newState) {
@@ -19,7 +19,7 @@ export function geProperty(key) {
       }
       if (!this.isEqual(this._state[key], newState)) {
         this._state[key] = newState
-        this._changed()
+        this._changed(key)
       }
     },
   }
@@ -37,12 +37,12 @@ export default class Model {
    *    - {Monitor} monitor
    */
   constructor(initState, opts = {}) {
-    this._dep = new Dependency
     this._actionDep = new Dependency
     this._actionKeys = []
     this._actionStates = {}
     this.monitor = opts.monitor || globalMonitor
     this._state = {}
+    this._stateDeps = {}
     this._initialState = {}
     this._initStateAndActionKeys(initState || {})
   }
@@ -70,7 +70,10 @@ export default class Model {
         } else {
           this._state[key] = val.call(this, initState[key], true)
         }
+        // Initial state resaved
         state[key] = val
+        // create state Dependency
+        this._stateDeps[key] = new Dependency
       })
       return state
     }, this._initialState)
@@ -92,7 +95,6 @@ export default class Model {
       throw new Error(`[${this.constructor.name}] Set state must in "@action".`)
     }
     const _state = this._state
-    let changed = false
     each(state, (val, key) => {
       if (!_state.hasOwnProperty(key)) {
         throw new Error(`[${this.constructor.name}] Unknown state "${key}"`)
@@ -101,16 +103,13 @@ export default class Model {
         val = this._initialState[key].call(this, val, false)
       }
       if (!this.isEqual(this._state[key], val)) {
-        changed = true
+        this._changed(key)
       }
       _state[key] = val
     })
-    if (changed) {
-      this._changed()
-    }
   }
-  _changed() {
-    this._dep.changed()
+  _changed(key) {
+    this._stateDeps[key].changed()
   }
   /**
    * Can be override by immutable
@@ -148,7 +147,6 @@ export default class Model {
    * @returns {Object} currentState
    */
   toJS() {
-    this._dep.depend()
     function parse(val) {
       if (val instanceof Model) {
         return val.toJS()
@@ -161,6 +159,9 @@ export default class Model {
       }
       return val
     }
-    return mapValues(this._state, val => parse(val))
+    return mapValues(this._state, (val, key) => {
+      this._stateDeps[key].depend()
+      return parse(val)
+    })
   }
 }

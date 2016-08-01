@@ -1,6 +1,6 @@
 {
   "name": "tangram-react",
-  "version": "0.4.0",
+  "version": "0.4.0-beta0",
   "description": "Simple, React state management",
   "main": "lib/index.js",
   "scripts": {

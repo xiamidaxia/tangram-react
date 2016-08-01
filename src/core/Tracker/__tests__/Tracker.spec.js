@@ -33,7 +33,7 @@ describe('Tracker', () => {
     })
     expect(Object.keys(a._deps).length).to.eql(1)
   })
-  it('autrun with Dependency changed immediately', () => {
+  it('autorun with Dependency changed immediately', () => {
     const a = new Dependency()
     let runTimes = 0
     autorun(() => {
