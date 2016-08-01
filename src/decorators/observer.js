@@ -1,6 +1,6 @@
 import React, { Component, PropTypes } from 'react'
 import { CONTEXT_NAME } from '../common/constants'
-import { autorun } from '../common/Tracker'
+import { autorun } from '../core/Tracker'
 
 export function patchComponent(TargetComponent) {
   const reactiveMixin = {
@@ -8,11 +8,12 @@ export function patchComponent(TargetComponent) {
       const originRender = this.render.bind(this)
       this.render = function render() {
         let renderResult
+        if (this._computation) this._computation.stop()
         this._computation = autorun((c) => {
           if (c.firstRun) {
             renderResult = originRender()
           } else {
-            this.forceUpdate()
+            setTimeout(() => this.forceUpdate(), 0)
           }
         })
         return renderResult
@@ -56,7 +57,6 @@ export default function observerDecorator(models = {}) {
     modelKeys = Object.keys(models)
   }
   return function observerWrap(TargetComponent) {
-    patchComponent(TargetComponent)
     class ObserverContainer extends Component {
       static contextTypes = {
         [CONTEXT_NAME]: PropTypes.object,
@@ -70,10 +70,14 @@ export default function observerDecorator(models = {}) {
           this._contextProps = context.pick(...modelKeys)
         }
       }
+      componentWillUnmount() {
+        this._computation.stop()
+      }
       render() {
         return <TargetComponent {...this._contextProps} {...this.props} />
       }
     }
+    patchComponent(ObserverContainer)
     return ObserverContainer
   }
 }

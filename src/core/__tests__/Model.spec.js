@@ -2,7 +2,7 @@ import Model from '../Model'
 import { expect } from 'chai'
 import state from '../../decorators/state'
 import action from '../../decorators/action'
-import Tracker, { autorun } from '../../common/Tracker'
+import { autorun } from '../../core/Tracker'
 describe('Model', () => {
   it('should init state by @state and initialState', () => {
     function func(val, isInit) {
@@ -206,10 +206,6 @@ describe('Model', () => {
     expect(autorunTimes).to.eql(3)
     await user.composeAction()
     expect(autorunTimes).to.eql(7)
-    setTimeout(() => {
-      // flush outside
-      Tracker.flush()
-    }, 70)
     await user.checkFlush()
     // async trigger
     expect(autorunTimes).to.eql(11)

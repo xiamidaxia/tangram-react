@@ -1,10 +1,10 @@
 {
   "name": "tangram-react",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Simple, React state management",
   "main": "lib/index.js",
   "scripts": {
-    "start": "webpack-dev-server -d --history-api-fallback --hot --inline --progress --colors --port 3000",
+    "start": "webpack-dev-server --inline --progress --colors --port 3000",
     "build": "make build",
     "test": "make test",
     "test:watch": "make test-watch",

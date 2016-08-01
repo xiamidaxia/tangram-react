@@ -1,5 +1,5 @@
 import { each, mapValues } from '../common/utils'
-import { autorun } from '../common/Tracker'
+import { autorun } from '../core/Tracker'
 import globalMonitor from './globalMonitor'
 import Model from './Model'
 

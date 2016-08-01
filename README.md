@@ -1,4 +1,4 @@
-## tangram-react
+## Tangram
 
 Simple, React state management
 

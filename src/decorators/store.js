@@ -14,7 +14,7 @@ export default function storeDecorator(initData, opts = {}) {
   return function contextWrap(TargetComponent) {
     addContextToComponent(TargetComponent)
     patchComponent(TargetComponent)
-    return class ContextContainer extends Component {
+    class ContextContainer extends Component {
       static childContextTypes = {
         [CONTEXT_NAME]: PropTypes.object.isRequired,
       }
@@ -26,6 +26,7 @@ export default function storeDecorator(initData, opts = {}) {
           const parentContext = this.getParentContext()
           this[CONTEXT_NAME] = new Context(initData, { ...opts, parentContext })
         }
+        this._contextProps = { ...this[CONTEXT_NAME].data }
       }
       getChildContext() {
         return {
@@ -39,8 +40,9 @@ export default function storeDecorator(initData, opts = {}) {
         return this.context[CONTEXT_NAME]
       }
       render() {
-        return <TargetComponent {...this[CONTEXT_NAME].data} {...this.props} />
+        return <TargetComponent {...this._contextProps} {...this.props} />
       }
     }
+    return ContextContainer
   }
 }
