@@ -6,7 +6,11 @@ import { each } from '../../common/utils'
 import Model from '../Model'
 import action from '../../decorators/action'
 import state from '../../decorators/state'
-
+function waitNextTick() {
+  return new Promise((res) => {
+    setTimeout(() => res(), 5)
+  })
+}
 describe('Context', () => {
   it('create', () => {
     class User extends Model {}
@@ -62,7 +66,7 @@ describe('Context', () => {
     expect(() => context.pick('m4')).to.throw(/not find/)
     expect(() => context.find('m4')).to.throw(/not find/)
   })
-  it('context use', () => {
+  it('context use', async () => {
     let runTimes = 0
     class Tool extends Model {
       @action use() {}
@@ -113,6 +117,7 @@ describe('Context', () => {
     man.updateName('abc')
     man.runOther()
     man.tool.use()
+    await waitNextTick()
     expect(runTimes).to.eql(12)
   })
 })

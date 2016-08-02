@@ -1,4 +1,5 @@
 import { getCurrentComputation } from './Computation'
+import { readyCompute } from './index'
 export default class Dependency {
   constructor() {
     this._deps = {}
@@ -19,6 +20,6 @@ export default class Dependency {
     delete this._deps[compute.id]
   }
   changed() {
-    Object.keys(this._deps).forEach(id => this._deps[id].compute())
+    Object.keys(this._deps).forEach(id => readyCompute(this._deps[id]))
   }
 }

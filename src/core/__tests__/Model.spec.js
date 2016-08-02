@@ -4,6 +4,11 @@ import state from '../../decorators/state'
 import action from '../../decorators/action'
 import { autorun } from '../../core/Tracker'
 describe('Model', () => {
+  function waitNextTick(time = 5) {
+    return new Promise((res) => {
+      setTimeout(() => res(), time)
+    })
+  }
   it('should init state by @state and initialState', () => {
     function func(val, isInit) {
       expect(isInit).to.eql(true)
@@ -195,27 +200,35 @@ describe('Model', () => {
       autorunTimes++
       return user.toJS()
     })
+    await waitNextTick()
     expect(autorunTimes).to.eql(1)
     const res = user.updateName('newName')
     // sync action
     expect(res).to.eql(true)
+    await waitNextTick()
     expect(autorunTimes).to.eql(2)
     user.updateName('newName')
+    await waitNextTick()
     expect(autorunTimes).to.eql(2)
     await user.updateAsync()
+    await waitNextTick()
     expect(autorunTimes).to.eql(3)
     await user.composeAction()
-    expect(autorunTimes).to.eql(7)
+    await waitNextTick()
+    expect(autorunTimes).to.eql(5)
     await user.checkFlush()
+    await waitNextTick()
     // async trigger
-    expect(autorunTimes).to.eql(11)
+    expect(autorunTimes).to.eql(9)
     // change the context
     await user.changeContext()
+    await waitNextTick()
     expect(user.a1).to.eql('a1')
     expect(user.a2).to.eql('a2')
     c.stop()
     await user.composeAction()
-    expect(autorunTimes).to.eql(11)
+    await waitNextTick()
+    expect(autorunTimes).to.eql(9)
   })
   it(`@action state`, async () => {
     class User extends Model {
@@ -235,6 +248,7 @@ describe('Model', () => {
       autorunTimes ++
       return user.getActionState('async')
     })
+    await waitNextTick()
     await user.async(10, () => {
       expect(user.getActionState('async').loading).to.eql(true)
     })
@@ -270,5 +284,110 @@ describe('Model', () => {
     expect(() => user.setState({ age: user.age + 1 })).to.throw(/@action/)
     expect(() => user.notAction()).to.throw(/@action/)
     expect(() => user.notAction2()).to.throw(/@action/)
+  })
+  it('set state more', async () => {
+    class User extends Model {
+      @state count1 = 0
+      @state count2 = 0
+      @state count3 = 0
+      @state count4 = 0
+      @action change() {
+        this.count1 ++
+        this.count2 ++
+        this.count3 ++
+        this.count4 ++
+      }
+      @action changeAsync() {
+        this.count1 ++
+        this.count2 ++
+        setTimeout(() => {
+          this.count3 ++
+          this.count4 ++
+        }, 10)
+      }
+      @action changeBySetState() {
+        this.setState({
+          count1: this.count1 + 1,
+          count2: this.count2 + 1,
+          count3: this.count3 + 1,
+          count4: this.count4 + 1,
+        })
+      }
+    }
+    const user = new User
+    let autorunTimes = 0
+    autorun(() => {
+      autorunTimes ++
+      user.toJS()
+    }, true)
+    user.change()
+    await waitNextTick()
+    expect(autorunTimes).to.eql(2)
+    user.change()
+    user.change()
+    user.change()
+    await waitNextTick()
+    expect(autorunTimes).to.eql(3)
+    user.changeBySetState()
+    user.changeBySetState()
+    user.changeBySetState()
+    await waitNextTick()
+    expect(autorunTimes).to.eql(4)
+  })
+  it('set state async', async () => {
+    class User extends Model {
+      @state count1 = 1
+      @state count2 = 0
+      @state count3 = 0
+      @state count4 = 0
+      @action async change() {
+        this.count1 ++
+        this.count2 ++
+        return new Promise((res) => {
+          setTimeout(() => {
+            this.count3 ++
+            this.count4 ++
+            res()
+          }, 3)
+        })
+      }
+      @action async changeBySetState() {
+        this.setState({
+          count1: this.count1 + 1,
+          count2: this.count2 + 1,
+        })
+        return new Promise((res) => {
+          setTimeout(() => {
+            this.setState({
+              count3: this.count3 + 1,
+              count4: this.count4 + 1,
+            })
+            res()
+          }, 3)
+        })
+      }
+    }
+    const user = new User
+    let autorunTimes = 0
+    autorun(() => {
+      autorunTimes ++
+      user.toJS()
+    }, true)
+    await user.change()
+    await waitNextTick()
+    expect(autorunTimes).to.eql(3)
+    await user.changeBySetState()
+    await waitNextTick()
+    expect(autorunTimes).to.eql(5)
+    await user.change()
+    await user.change()
+    await user.change()
+    await waitNextTick()
+    expect(autorunTimes).to.eql(9)
+    await user.changeBySetState()
+    await user.changeBySetState()
+    await user.changeBySetState()
+    await waitNextTick()
+    expect(autorunTimes).to.eql(13)
   })
 })

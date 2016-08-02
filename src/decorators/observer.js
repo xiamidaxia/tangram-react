@@ -36,7 +36,7 @@ export function patchComponent(TargetComponent) {
       } else {
         setTimeout(() => this.forceUpdate(), 0)
       }
-    })
+    }, true)
     return renderResult
   }
 }

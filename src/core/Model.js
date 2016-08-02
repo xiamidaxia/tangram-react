@@ -1,4 +1,4 @@
-import { Dependency } from '../core/Tracker'
+import { Dependency, flush } from '../core/Tracker'
 import { each, mapValues, isPlainObject } from '../common/utils'
 import Monitor from './Monitor'
 import globalMonitor from './globalMonitor'
@@ -142,6 +142,7 @@ export default class Model {
   _setActionState(actionName, val) {
     this._actionStates[actionName] = val
     this._actionDep.changed()
+    flush()
   }
   /**
    * @returns {Object} currentState

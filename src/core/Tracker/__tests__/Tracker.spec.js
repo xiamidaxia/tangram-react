@@ -1,8 +1,12 @@
 import Computation from '../Computation'
-import { autorun, Dependency } from '../index'
+import { autorun, Dependency, flush } from '../index'
 import { expect } from 'chai'
 
 describe('Tracker', () => {
+  function changed(dep) {
+    dep.changed()
+    flush(true)
+  }
   it('autorun', () => {
     const a = new Dependency()
     let runTimes = 0
@@ -15,13 +19,13 @@ describe('Tracker', () => {
       if (runTimes !== 2) {
         a.depend()
       }
-    })
+    }, true)
     expect(compute.firstRun).to.eql(false)
     expect(a.isDepend(compute)).to.eql(true)
     expect(runTimes).to.eql(1)
-    a.changed()
+    changed(a)
     expect(runTimes).to.eql(2)
-    a.changed()
+    changed(a)
     // no depend
     expect(runTimes).to.eql(2)
   })
@@ -30,7 +34,7 @@ describe('Tracker', () => {
     autorun(() => {
       a.depend()
       a.depend()
-    })
+    }, true)
     expect(Object.keys(a._deps).length).to.eql(1)
   })
   it('autorun with Dependency changed immediately', () => {
@@ -38,10 +42,10 @@ describe('Tracker', () => {
     let runTimes = 0
     autorun(() => {
       a.depend()
-      a.changed()
+      changed(a)
       runTimes ++
-    })
-    a.changed()
+    }, true)
+    changed(a)
     expect(runTimes).to.eql(2)
   })
   it('autorun nested', () => {
@@ -60,24 +64,24 @@ describe('Tracker', () => {
         autorun(() => {
           c.depend()
           buf += 'c'
-        })
-      })
-    })
+        }, true)
+      }, true)
+    }, true)
     check('abc')
-    a.changed()
+    changed(a)
     check('abc')
-    b.changed()
+    changed(b)
     check('bc')
-    c.changed()
+    changed(c)
     check('c')
     c2.stop()
-    b.changed()
+    changed(b)
     check('')
-    c.changed()
+    changed(c)
     check('')
-    a.changed()
+    changed(a)
     check('abc')
-    b.changed()
+    changed(b)
     check('bc')
   })
 })
