@@ -24,7 +24,7 @@ export function patchComponent(TargetComponent) {
         }
       }
       // check observer depend version
-      if (this._computation.dependVersion === this._computation.computeDependVersion()) {
+      if (this._computation.dependVersion !== this._computation.computeDependVersion()) {
         return true
       }
       return false
