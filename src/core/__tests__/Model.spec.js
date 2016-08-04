@@ -200,7 +200,6 @@ describe('Model', () => {
       autorunTimes++
       return user.toJS()
     })
-    await waitNextTick()
     expect(autorunTimes).to.eql(1)
     const res = user.updateName('newName')
     // sync action
@@ -248,7 +247,6 @@ describe('Model', () => {
       autorunTimes ++
       return user.getActionState('async')
     })
-    await waitNextTick()
     await user.async(10, () => {
       expect(user.getActionState('async').loading).to.eql(true)
     })
@@ -319,7 +317,7 @@ describe('Model', () => {
     autorun(() => {
       autorunTimes ++
       user.toJS()
-    }, true)
+    })
     user.change()
     await waitNextTick()
     expect(autorunTimes).to.eql(2)
@@ -372,7 +370,7 @@ describe('Model', () => {
     autorun(() => {
       autorunTimes ++
       user.toJS()
-    }, true)
+    })
     await user.change()
     await waitNextTick()
     expect(autorunTimes).to.eql(3)

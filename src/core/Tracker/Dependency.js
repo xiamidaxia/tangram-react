@@ -1,25 +1,32 @@
 import { getCurrentComputation } from './Computation'
 import { readyCompute } from './index'
+let nextId = 1
 export default class Dependency {
   constructor() {
-    this._deps = {}
+    this._deps = []
+    this._version = 0
+    this._id = nextId ++
+  }
+  get version() {
+    return this._id + '_' + this._version
   }
   depend() {
     const compute = getCurrentComputation()
     // Must depend a computation
     if (!compute) return
-    this._deps[compute.id] = compute
-    compute.onInvalidate(() => {
-      this.remove(compute)
-    })
+    if (this._deps.includes(compute)) return
+    this._deps.push(compute)
+    compute.onDepend(this)
   }
   isDepend(compute) {
-    return !!Object.keys(this._deps).find(id => this._deps[id] === compute)
+    return this._deps.includes(compute)
   }
   remove(compute) {
-    delete this._deps[compute.id]
+    const index = this._deps.indexOf(compute)
+    if (index !== -1) this._deps.splice(index, 1)
   }
   changed() {
-    Object.keys(this._deps).forEach(id => readyCompute(this._deps[id]))
+    this._version ++
+    this._deps.forEach(compute => readyCompute(compute))
   }
 }

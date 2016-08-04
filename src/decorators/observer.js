@@ -1,8 +1,33 @@
 import React, { Component, PropTypes } from 'react'
 import { CONTEXT_NAME } from '../common/constants'
-import { autorun } from '../core/Tracker'
+import Model from '../core/Model'
+import Computation from '../core/Tracker/Computation'
 export function patchComponent(TargetComponent) {
   const reactiveMixin = {
+    shouldComponentUpdate(nextProps, nextState) {
+      if (this.state !== nextState) {
+        return true
+      }
+      const keys = Object.keys(this.props)
+      if (keys.length !== Object.keys(nextProps).length) {
+        return true
+      }
+      let key
+      for (let i = 0; i < keys.length; i++) {
+        key = keys[i]
+        const newValue = nextProps[key]
+        if (newValue !== this.props[key]) {
+          return true
+        } else if (newValue && typeof newValue === 'object' && !(newValue instanceof Model)) {
+          return true
+        }
+      }
+      // check observer depend version
+      if (this._computation.dependVersion === this._computation.computeDependVersion()) {
+        return true
+      }
+      return false
+    },
     componentWillUnmount() {
       this._computation.stop()
     },
@@ -14,29 +39,40 @@ export function patchComponent(TargetComponent) {
     if (!base) {
       target[funcName] = mixinFunc
     } else {
-      target[funcName] = function patched() {
-        base.apply(this, arguments)
-        mixinFunc.apply(this, arguments)
+      if (funcName === 'shouldComponentUpdate') {
+        target[funcName] = function patched() {
+          return mixinFunc.apply(this, arguments) && base.apply(this, arguments)
+        }
+      } else {
+        target[funcName] = function patched() {
+          base.apply(this, arguments)
+          mixinFunc.apply(this, arguments)
+        }
       }
     }
   }
   const proto = TargetComponent.prototype
   ;[
     'componentWillUnmount',
+    'shouldComponentUpdate',
   ].forEach((funcName) => patch(proto, funcName))
   // patch render
   const originRender = proto.render
   proto.render = function render() {
     let renderResult
     if (this._computation) this._computation.stop()
-    this._computation = autorun((c) => {
-      this._computation = c
-      if (c.firstRun) {
+    this._computation = new Computation(() => {
+      if (this._computation.firstRun) {
         renderResult = originRender.call(this)
       } else {
-        setTimeout(() => this.forceUpdate(), 0)
+        setTimeout(() => {
+          this.setState({
+            _computationVersion: this._computation.dependVersion,
+          })
+        })
       }
-    }, true)
+    })
+    this._computation.compute()
     return renderResult
   }
 }

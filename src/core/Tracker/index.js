@@ -1,4 +1,4 @@
-import Computation from './Computation'
+import Computation, { getCurrentComputation } from './Computation'
 let readyComputations = {}
 export Dependency from './Dependency'
 
@@ -14,9 +14,12 @@ export function flush(noNextTick) {
   })
 }
 
-export function autorun(fn, isSync) {
+export function autorun(fn) {
   const computation = new Computation(fn)
-  readyCompute(computation)
-  flush(isSync)
+  const oldComputation = getCurrentComputation()
+  if (oldComputation) {
+    oldComputation.onInvalidate(() => computation.stop())
+  }
+  computation.compute()
   return computation
 }

@@ -20,6 +20,7 @@
     "semi": [2, "never"],
     "default-case": 0,
     "no-param-reassign": 0,
+    "no-cond-assign": 0,
     "no-shadow": 0,
     "no-proto": 0,
     "func-names": 2,

@@ -19,7 +19,7 @@ describe('Tracker', () => {
       if (runTimes !== 2) {
         a.depend()
       }
-    }, true)
+    })
     expect(compute.firstRun).to.eql(false)
     expect(a.isDepend(compute)).to.eql(true)
     expect(runTimes).to.eql(1)
@@ -34,8 +34,8 @@ describe('Tracker', () => {
     autorun(() => {
       a.depend()
       a.depend()
-    }, true)
-    expect(Object.keys(a._deps).length).to.eql(1)
+    })
+    expect(a._deps.length).to.eql(1)
   })
   it('autorun with Dependency changed immediately', () => {
     const a = new Dependency()
@@ -44,7 +44,7 @@ describe('Tracker', () => {
       a.depend()
       changed(a)
       runTimes ++
-    }, true)
+    })
     changed(a)
     expect(runTimes).to.eql(2)
   })
@@ -64,9 +64,9 @@ describe('Tracker', () => {
         autorun(() => {
           c.depend()
           buf += 'c'
-        }, true)
-      }, true)
-    }, true)
+        })
+      })
+    })
     check('abc')
     changed(a)
     check('abc')
@@ -83,5 +83,38 @@ describe('Tracker', () => {
     check('abc')
     changed(b)
     check('bc')
+  })
+  it('computation nested', () => {
+    const a = new Dependency
+    const b = new Dependency
+    const c = new Dependency
+    let childRunTimes = 0
+    let parentRunTimes = 0
+    let child
+    const parent = new Computation(() => {
+      a.depend()
+      b.depend()
+      if (!child) {
+        child = new Computation(() => {
+          a.depend()
+          c.depend()
+          childRunTimes ++
+        })
+      }
+      child.compute()
+      parentRunTimes ++
+    })
+    parent.compute()
+    expect(parent._dependVersion).to.eql(a.version + ',' + b.version)
+    expect(child._dependVersion).to.eql(a.version + ',' + c.version)
+    changed(a)
+    expect(childRunTimes).to.eql(2)
+    expect(parentRunTimes).to.eql(2)
+    changed(b)
+    expect(parentRunTimes).to.eql(3)
+    expect(childRunTimes).to.eql(2)
+    changed(c)
+    expect(parentRunTimes).to.eql(3)
+    expect(childRunTimes).to.eql(3)
   })
 })
