@@ -144,6 +144,27 @@ export default class Model {
     this._actionDep.changed()
     flush()
   }
+  get version() {
+    const arr = []
+    function parse(val) {
+      if (val instanceof Model) {
+        return arr.push(val.version)
+      }
+      if (Array.isArray(val)) {
+        return val.map(item => parse(item))
+      }
+      if (isPlainObject(val)) {
+        return mapValues(val, item => parse(item))
+      }
+    }
+    each(this._state, (val, key) => {
+      const dep = this._stateDeps[key]
+      dep.depend()
+      arr.push(dep.version)
+      parse(val)
+    })
+    return arr.join(';')
+  }
   /**
    * @returns {Object} currentState
    */

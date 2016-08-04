@@ -388,4 +388,38 @@ describe('Model', () => {
     await waitNextTick()
     expect(autorunTimes).to.eql(13)
   })
+  it('model version', async () => {
+    class A extends Model {
+      @state count = 0
+      @action add() {
+        this.count ++
+      }
+    }
+    class User extends Model {
+      @state arr = [new A, new A]
+      @state name = ''
+      @action add() {
+        this.arr = this.arr.concat([new A])
+      }
+    }
+    const user = new User
+    let version
+    let autorunTimes = 0
+    autorun(() => {
+      autorunTimes ++
+      return user.version
+    })
+    expect(user.version.split(';').length).to.eql(4)
+    version = user.version
+    user.add()
+    await waitNextTick()
+    expect(autorunTimes).to.eql(2)
+    expect(user.version.split(';').length).to.eql(5)
+    expect(user.version).to.not.eql(version)
+    version = user.version
+    user.arr[2].add()
+    await waitNextTick()
+    expect(autorunTimes).to.eql(3)
+    expect(user.version).to.not.eql(version)
+  })
 })
