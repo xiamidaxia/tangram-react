@@ -389,6 +389,7 @@ describe('Model', () => {
     expect(autorunTimes).to.eql(13)
   })
   it('model version', async () => {
+    let version
     class A extends Model {
       @state count = 0
       @action add() {
@@ -397,29 +398,55 @@ describe('Model', () => {
     }
     class User extends Model {
       @state arr = [new A, new A]
+      @state obj = {
+        a: new A,
+      }
       @state name = ''
       @action add() {
         this.arr = this.arr.concat([new A])
       }
+      @action addObj() {
+        this.obj = {
+          ...this.obj,
+          b: new A,
+        }
+      }
     }
     const user = new User
-    let version
+    version = user.version
     let autorunTimes = 0
     autorun(() => {
       autorunTimes ++
       return user.version
     })
-    expect(user.version.split(';').length).to.eql(4)
-    version = user.version
+    const checkVersion = () => {
+      expect(user.version).to.not.eql(version)
+      version = user.version
+    }
+    expect(user.version.split(';').length).to.eql(6)
     user.add()
     await waitNextTick()
     expect(autorunTimes).to.eql(2)
-    expect(user.version.split(';').length).to.eql(5)
-    expect(user.version).to.not.eql(version)
-    version = user.version
+    expect(user.version.split(';').length).to.eql(7)
+    checkVersion()
+    // check arr
     user.arr[2].add()
     await waitNextTick()
     expect(autorunTimes).to.eql(3)
-    expect(user.version).to.not.eql(version)
+    // check obj
+    checkVersion()
+    user.obj.a.add()
+    await waitNextTick()
+    expect(autorunTimes).to.eql(4)
+    checkVersion()
+    user.addObj()
+    await waitNextTick()
+    expect(autorunTimes).to.eql(5)
+    expect(user.version.split(';').length).to.eql(8)
+    checkVersion()
+    user.obj.b.add()
+    await waitNextTick()
+    expect(autorunTimes).to.eql(6)
+    checkVersion()
   })
 })
