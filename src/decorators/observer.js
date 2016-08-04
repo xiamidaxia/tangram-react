@@ -5,6 +5,7 @@ import Computation from '../core/Tracker/Computation'
 export function patchComponent(TargetComponent) {
   const reactiveMixin = {
     shouldComponentUpdate(nextProps, nextState) {
+      // update on any state changes (as is the default)
       if (this.state !== nextState) {
         return true
       }
@@ -41,7 +42,7 @@ export function patchComponent(TargetComponent) {
     } else {
       if (funcName === 'shouldComponentUpdate') {
         target[funcName] = function patched() {
-          return mixinFunc.apply(this, arguments) && base.apply(this, arguments)
+          return base.apply(this, arguments) && mixinFunc.apply(this, arguments)
         }
       } else {
         target[funcName] = function patched() {
