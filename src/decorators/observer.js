@@ -42,7 +42,7 @@ export function patchComponent(TargetComponent) {
     } else {
       if (funcName === 'shouldComponentUpdate') {
         target[funcName] = function patched() {
-          return base.apply(this, arguments) && mixinFunc.apply(this, arguments)
+          return base.apply(this, arguments) || mixinFunc.apply(this, arguments)
         }
       } else {
         target[funcName] = function patched() {
